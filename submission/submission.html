@@ -88,7 +88,7 @@
       flex-direction: column;
 
       padding: 0;
-      margin-bottom: 40px;
+      margin-bottom: 24px;
 
       align-items: center;
       justify-content: center;
@@ -128,7 +128,7 @@
       padding: 8px;
     }
 
-    hr {
+    #confirmation-popup hr {
       border: none;
       height: 1px;
       width: 100%;
@@ -208,6 +208,144 @@
       filter: blur(0px);
     }
 
+    /* styling for the opt out */
+
+    #opt-out-popup {
+      display: flex;
+      flex-direction: column;
+
+      align-items: center;
+      justify-content: center;
+
+      background: #f2f2f7;
+      color: #333;
+      box-shadow: 0 4px 20px #33333380;
+      padding: 0px 20px 16px 20px;
+      border-radius: 16px;
+      text-align: center;
+      
+      width: 60%;
+      max-height: 80vh;
+      height: auto;
+    }
+
+    #opt-question-amount {
+      position: relative;
+      top: 8px;
+      left: 0;
+
+      font-size: 18px;
+    }
+
+    #opt-out-content {
+      display: flex;
+      flex-direction: column;
+
+      align-items: center;
+      justify-content: center;
+
+      padding: 0;
+      margin: 0;
+    }
+
+    #opt-out-popup hr {
+      border: none;
+      height: 1px;
+      width: 100%;
+      background-color: #333;
+      opacity: 0.2;
+      margin: 8px 0 8px 0;
+      display: block;
+    }
+
+    #opt-out-question {
+      font-size: 20px;
+      font-weight: 500;
+    }
+    
+    #label-row {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+
+      gap: 12px;
+    }
+
+    #opt-out-content label {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 10px;
+      
+      font-size: 20px;
+      font-weight: 500;
+    }
+
+    #opt-out-content textarea {
+      margin-top: 16px;
+      height: 120px;
+      width: 400px;
+      resize: none;
+      overflow-y: auto;
+      margin-bottom: 16px;
+
+      border-radius: 16px;
+      border: 1px solid #333;
+    }
+
+    #required-characters-text {
+      font-size: 16px;
+      padding: 8px;
+
+      background: #6155f5;
+      border: none;
+      color: white;
+      border-radius: 12px;
+    }
+
+    #opt-buttons-container {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+
+      gap: 12px;
+    }
+
+    #opt-out-popup button {
+      padding: 10px 20px;
+      margin-top: 8px;
+
+      font-size: 16px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    #exit-response {
+      background: none;
+      border: none;
+    }
+
+    #submit-response {
+      background: #ff383c;
+      color: white;
+      border: none;
+      border-radius: 12px;
+    }
+
+    #submit-response:disabled {
+      cursor:not-allowed;
+    }
+
+    #exit-response:hover {
+      text-decoration: underline;
+    }
+
+    #submit-response:hover {
+      text-decoration: underline;
+    }
+
   </style>
 </head>
 
@@ -240,6 +378,26 @@
         <h2 id="timeleft-text">You have x seconds to redeem</h2>
         <h1 id="fake-googlecode">Code: xxxx xxxx xxxx xxxx</h1>
       </div>
+      <!-- opt-out screen -->
+      <div id="opt-out-popup" class="hidden">
+        <h1 id="opt-question-amount">x out of x</h1>
+        <hr>
+        <div id="opt-out-content">
+          <h2 id="opt-out-question">
+            Shh... Don't tell my boss but could you please write my essay for me? It's about the history of cheese.
+          </h2>
+          <div id="label-row">
+            <label id="response-label" for="opt-out-answers">Response: </label>
+            <span id="required-characters-text">Required: x characters</span>
+          </div>
+          <textarea type="text" id="opt-out-answers"></textarea>
+        </div>
+        <hr>
+        <div id="opt-buttons-container">
+          <button id="submit-response" disabled>Submit</button>
+          <button id="exit-response">Cancel</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -264,7 +422,7 @@
         //changed this to show winnner everytime the ad finishes
         if (event.data.type === 'adFinished') {
           //skipButton.style.display = 'none';
-          //window.top.postMessage({ type: 'fail' }, '*');
+          
           showWinner()
         }
       });
@@ -273,10 +431,20 @@
       //all dom elements:
       const confirmationPopup = document.getElementById('confirmation-popup');
       const confirmCancelButton = document.getElementById('cancel-button');
+      const confirmConfirmButton = document.getElementById('confirm-button');
 
       const winnerPopup = document.getElementById('winner-popup');
       const timeLeftText = document.getElementById('timeleft-text');
       const fakeGoogleCode = document.getElementById('fake-googlecode');
+
+      const optOutPopup = document.getElementById('opt-out-popup');
+      const optOutQuestion = document.getElementById('opt-out-question');
+      const optQuestionAmount = document.getElementById('opt-question-amount');
+      const optOutAnswer = document.getElementById('opt-out-answers');
+      const requiredCharactersText = document.getElementById('required-characters-text');
+      const responseLabel = document.getElementById('response-label')
+      const submitReponsebutton = document.getElementById('submit-response');
+      const exitResponseButton = document.getElementById('exit-response');
 
       //reuseable functions for pause and play:
       function pauseVideo() {
@@ -310,7 +478,12 @@
       confirmCancelButton.addEventListener("click", () => {
         confirmationPopup.classList.add("hidden");
         hideOverlay();
-      })
+      });
+
+      confirmConfirmButton.addEventListener("click", () => {
+        confirmationPopup.classList.add("hidden")
+        startOptOut();
+      });
 
       // im changing it so it shows the confirmation instead of skipping
       skipButton.addEventListener('click', () => {
@@ -365,6 +538,138 @@
         }, 1000);
 
       }
+
+      //opting out popup:
+
+      //getting a random question: if you want you could edit some of these there are some ridicilous ones and the rest are kind of normal
+      let questions = [
+          "Why do you want to opt out?",
+          "How was your experience in the ad-program?",
+          "What was your worst experience using the ad-program?",
+          "How much money did you make using the ad-program?",
+          "What is some feedback for the ad-program?",
+          "Give an example of a time you've used the ad-program successfully.",
+          "How many squirrels have you seen today?",
+          "Do you like watching ads?",
+          "How many ads have you watched so far?",
+          "If a 5 year old were to use the ad-program how effective would it be?",
+          "How hard was it to redeem the gift-cards?",
+          "What other features could be added to the ad-program?",
+          "Write to the CEO",
+          "Shh... Don't tell my boss but could you please write my essay for me? It's about the history of cheese.",
+      ]
+      //no duplicate questions
+      let remainingQuestions = [];
+      function resetQuestions() {
+        remainingQuestions = [...questions].sort(() => Math.random() - 0.5);
+      }
+      function getRandomQuestion() {
+        if (remainingQuestions.length === 0) {
+          resetQuestions();
+        }
+        return remainingQuestions.pop();
+      }
+
+      //starting the survey
+      //amount of characters per question and amount of questions
+      let requiredChars = 10;
+      let questionAmount = 10;
+      let currentQuestion = 0;
+      let isFinalStage = false
+      function startOptOut() {
+        optOutPopup.classList.remove("hidden");
+        
+        currentQuestion = 0;
+        requiredChars = 10;
+        isFinalStage = false;
+
+        resetQuestions();
+        nextQuestion();
+      }
+
+      //finishing the optout
+      function finishOptOut() {
+        optOutPopup.classList.add("hidden");
+        failedSubmission();
+      }
+
+      //if its the last question it will give a 50% chance to finalize
+      function nextQuestion() {
+        if (currentQuestion >= questionAmount) {
+          isFinalStage = true;
+
+          optQuestionAmount.textContent = `${questionAmount} out of ${questionAmount}`;
+          optOutQuestion.textContent = "Finalize your submission.";
+          
+          //hiding both the elements in the final stage
+          optOutAnswer.style.display = "none";
+          requiredCharactersText.style.display = "none";
+          responseLabel.style.display = "none";
+
+          submitReponsebutton.disabled = false;
+          return;
+        }
+
+        isFinalStage = false;
+
+        //showing elements and updating text
+        optQuestionAmount.textContent = `${currentQuestion + 1} out of ${questionAmount}`;
+        optOutAnswer.style.display = "block";
+        requiredCharactersText.style.display = "block";
+        responseLabel.style.display = "block";
+        optOutAnswer.value = "";
+        optOutQuestion.textContent = getRandomQuestion();
+
+        currentQuestion++;
+
+        requiredChars += 10;
+        requiredCharactersText.textContent = `Required: ${requiredChars} characters`;
+      }
+      //50% chance to fail
+      function adFail() {
+        window.top.postMessage({ type: 'fail' }, '*');
+      }
+
+      function failedSubmission() {
+        let rand = Math.random();
+        if (rand > 0.5) {
+          setTimeout(() => adSuccess(), 800);
+        }else{
+          setTimeout(() => adFail(), 800);
+        }
+      }
+      //update the button state (disabled/enabled) and required characters
+      // if you have too many or too little it wont work the amount has to be exact
+      optOutAnswer.addEventListener("input", () => {
+        const textChars = optOutAnswer.value.length;
+        const remaining = requiredChars - textChars;
+
+        //if its just right let them pass
+        if (textChars == requiredChars) {
+          submitReponsebutton.disabled = false;
+          requiredCharactersText.textContent = `Required: 0 characters`;
+        //if theres too many characters dont allow them to pass
+        }else if (textChars > requiredChars) {
+          requiredCharactersText.textContent = "too much text.";
+          submitReponsebutton.disabled = true;
+        //if theres too little characters dont allow them to pass
+        }else {
+          requiredCharactersText.textContent = `${remaining} characters left`;
+          submitReponsebutton.disabled = true;
+        }
+      });
+
+      submitReponsebutton.addEventListener("click", () => {
+        if (isFinalStage) {
+          failedSubmission();
+          return;
+        }
+        nextQuestion();
+      });
+
+      exitResponseButton.addEventListener("click", () => {
+        window.top.postMessage({ type: 'fail' }, '*');
+      })
  
     })(window, document);
   </script>
