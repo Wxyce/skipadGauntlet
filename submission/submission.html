@@ -187,6 +187,27 @@
       height: auto;
     }
 
+    #winner-popup h1 {
+      font-size: 30px;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    #winner-popup span {
+      font-weight: 700;
+    }
+
+    #winner-popup h2 {
+      font-size: 16px;
+      opacity: 0.8;
+      margin: 8px;
+      font-weight: 200;
+    }
+
+    #fake-googlecode {
+      filter: blur(0px);
+    }
+
   </style>
 </head>
 
@@ -197,7 +218,7 @@
       Skip Ad...
     </button>
 
-    <div id="popup-overlay" class="hiddenn">
+    <div id="popup-overlay" class="hidden">
       <!-- confirmation screen -->
       <div id="confirmation-popup" class="hidden">
         <div id="confirmation-titlebar">
@@ -214,10 +235,10 @@
         </div>
       </div>
       <!-- "winning" screen -->
-      <div id="winner-popup">
-        <h1>Congratulations! You've won a $10 dollar Google Play GiftCard</h1>
-        <h2>You have x seconds to redeem</h2>
-        
+      <div id="winner-popup" class="hidden">
+        <h1>🎉 Congratulations! You've won a <span>$10</span> Google Play GiftCard 🎉</h1>
+        <h2 id="timeleft-text">You have x seconds to redeem</h2>
+        <h1 id="fake-googlecode">Code: xxxx xxxx xxxx xxxx</h1>
       </div>
     </div>
   </div>
@@ -240,12 +261,11 @@
           skipButton.style.display = 'block';
         }
 
-        // By default, if the user doesn't "skip" the ad before the video ends,
-        // we call fail to restart. You're welcome to replace this with a survey
-        // or other interaction instead (see examples/survey).
+        //changed this to show winnner everytime the ad finishes
         if (event.data.type === 'adFinished') {
-          skipButton.style.display = 'none';
-          window.top.postMessage({ type: 'fail' }, '*');
+          //skipButton.style.display = 'none';
+          //window.top.postMessage({ type: 'fail' }, '*');
+          showWinner()
         }
       });
 
@@ -253,6 +273,10 @@
       //all dom elements:
       const confirmationPopup = document.getElementById('confirmation-popup');
       const confirmCancelButton = document.getElementById('cancel-button');
+
+      const winnerPopup = document.getElementById('winner-popup');
+      const timeLeftText = document.getElementById('timeleft-text');
+      const fakeGoogleCode = document.getElementById('fake-googlecode');
 
       //reuseable functions for pause and play:
       function pauseVideo() {
@@ -295,8 +319,53 @@
         confirmationPopup.classList.remove("hidden");
         showOverlay();
       });
+ 
+      //"winner" pop up functionality
+      function GenerateFakeCode() {
+        //i placed the numbers in between the letters so they get more numbers randomized in
+        const characters = "ABCDEFGH1234IJKLMNOPQRS567890TUVWXY";
+        let result = ""
+        //runs 4 times then 4 times inside to make a code like: xxxx xxxx xxxx xxxx 
+        for (let i = 0; i < 4; i++) {
+          for (let j = 0; j < 4; j++) {
+            result += characters.charAt(Math.floor(Math.random() * characters.length));
+          }
+          result += " ";
+        }
+        return result;
+      }
 
+      function showWinner() {
+        showOverlay();
+        winnerPopup.classList.remove("hidden");
 
+        fakeGoogleCode.textContent = GenerateFakeCode();
+
+        //count down until the winner disappears
+        let timeLeft = 10;
+        let blurAmount = 0;
+        const countDown = setInterval(() => {
+          
+
+          //when the time is gone it will hide everything and then play the next ad
+          if (timeLeft <= 0) {
+            clearInterval(countDown);
+            timeLeftText.textContent = "Times up. If you couldn't get the code please contact support.";
+            winnerPopup.classList.add("hidden");
+            hideOverlay();
+            setTimeout(() => adSuccess(), 800);
+          }
+
+          //every second the code will get more and more blurry happens
+          timeLeft--;
+          blurAmount += 0.5;
+          timeLeftText.textContent = `You have ${timeLeft} seconds to redeem`;
+          fakeGoogleCode.style.filter = `blur(${blurAmount}px)`;
+
+        }, 1000);
+
+      }
+ 
     })(window, document);
   </script>
 </body>
