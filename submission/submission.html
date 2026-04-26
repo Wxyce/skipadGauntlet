@@ -34,15 +34,192 @@
       color: white;
       cursor: pointer;
     }
+
+    /* the styling for my custom elements (confirmation + survey) */
+
+    .hidden {display: none !important;}
+
+    #popup-overlay {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+
+      overflow: hidden;
+
+      width: 100%;
+      height: 100%;
+    }
+
+    #confirmation-popup {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+
+      background: #f2f2f7;
+      color: #333;
+      box-shadow: 0 4px 20px #33333380;
+      padding: 20px;
+      border-radius: 16px;
+      text-align: center;
+      
+      width: 60%;
+      max-height: 80vh;
+      height: auto;
+    }
+
+    #confirmation-image-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      margin: 0;
+
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    #confirmation-titlebar {
+      display: flex;
+      flex-direction: column;
+
+      padding: 0;
+      margin-bottom: 40px;
+
+      align-items: center;
+      justify-content: center;
+    }
+
+    #confirmation-titlebar h1 {
+      font-size: 30px;
+      margin: 0;
+    }
+
+    #confirmation-titlebar h2 {
+      font-size: 16px;
+      opacity: 0.8;
+      margin: 8px;
+      font-weight: 200;
+    }
+
+    #confirmation-titlebar span {
+      font-weight: 700;
+    }
+
+    #confirmation-controls {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+
+      gap: 12px;
+    }
+
+    #extra-info-confirmation {
+      margin-top: 8px;
+      background: #6155f5;
+      border: none;
+      color: white;
+      border-radius: 12px;
+      padding: 8px;
+    }
+
+    hr {
+      border: none;
+      height: 1px;
+      width: 100%;
+      background-color: #333;
+      opacity: 0.2;
+      margin: 0 0 20px 0;
+      display: block;
+    }
+    
+    #confirmation-controls button {
+      padding: 10px 20px;
+
+      font-size: 16px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    #confirm-button {
+      background: none;
+      border: none;
+      color: #464646;
+    }
+
+    #confirm-button:hover {
+      text-decoration: underline;
+    }
+
+    #cancel-button {
+      background: #ff383c;
+      color: white;
+      border: none;
+      border-radius: 12px;
+    }
+
+    #cancel-button:hover {
+      text-decoration: underline;
+    }
+
+    /* styling for "winning" screen */
+
+    #winner-popup {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+
+      background: #f2f2f7;
+      color: #333;
+      box-shadow: 0 4px 20px #33333380;
+      padding: 20px;
+      border-radius: 16px;
+      text-align: center;
+      
+      width: 60%;
+      max-height: 80vh;
+      height: auto;
+    }
+
   </style>
 </head>
 
 <body>
   <div id="overlay-container">
-    <!-- We've added a sample button. Feel free to remove it: -->
+    <!-- skip button -->
     <button id="skip">
       Skip Ad...
     </button>
+
+    <div id="popup-overlay" class="hiddenn">
+      <!-- confirmation screen -->
+      <div id="confirmation-popup" class="hidden">
+        <div id="confirmation-titlebar">
+          <h1><b>Sure you want to skip the ad?</b></h1>
+          <h2 id="recently-selected">You've recently been selected for our ad watching payment plan, not going through will cancel the plan.</h2>
+          <div id="extra-info-confirmation">
+            <h2>Recent users have reportedly <span>earned over $500</span> with this new plan.</h2>
+          </div>
+        </div>
+        <hr>
+        <div id="confirmation-controls">
+          <button id="confirm-button">Confirm</button>
+          <button id="cancel-button">Cancel</button>
+        </div>
+      </div>
+      <!-- "winning" screen -->
+      <div id="winner-popup">
+        <h1>Congratulations! You've won a $10 dollar Google Play GiftCard</h1>
+        <h2>You have x seconds to redeem</h2>
+        
+      </div>
+    </div>
   </div>
 
   <script type="text/javascript">
@@ -72,11 +249,53 @@
         }
       });
 
-      // Your ad overlay code goes here, we've added a simple example below:
+      // my edited code here for the stuff i added
+      //all dom elements:
+      const confirmationPopup = document.getElementById('confirmation-popup');
+      const confirmCancelButton = document.getElementById('cancel-button');
+
+      //reuseable functions for pause and play:
+      function pauseVideo() {
+        window.top.postMessage({ type: 'pause' }, '*');
+      }
+      function playVideo() {
+        window.top.postMessage({ type: 'play' }, '*');
+      }
+ 
+      //reusable functions for the overlay 
+      const overlay = document.getElementById('popup-overlay');
+      //when the overlay is shown video pauses so they cant just watch the video while answering the prompts
+      let currentSpeed = 1;
+      //everytime the overlay gets shown again i will slow down the video so if the scammer wants to go back to that screen for some reason 
+      //it will take longer for the video to play every single time
+      function hideOverlay() {
+        overlay.classList.add("hidden");
+        playVideo()
+        //preventing error for speed going negatives
+        if (currentSpeed > 0.1) {
+          currentSpeed -= 0.1;
+        }
+        window.top.postMessage({ type: 'setPlaybackRate', value: currentSpeed }, '*');
+      }
+      function showOverlay() {
+        overlay.classList.remove("hidden");
+        pauseVideo()
+      }
+      
+      
+      confirmCancelButton.addEventListener("click", () => {
+        confirmationPopup.classList.add("hidden");
+        hideOverlay();
+      })
+
+      // im changing it so it shows the confirmation instead of skipping
       skipButton.addEventListener('click', () => {
-        skipButton.style.display = 'none';
-        adSuccess();
+        //skipButton.style.display = 'none';
+        //adSuccess();
+        confirmationPopup.classList.remove("hidden");
+        showOverlay();
       });
+
 
     })(window, document);
   </script>
